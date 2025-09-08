@@ -17,24 +17,51 @@ const Redirect = () => {
           navigate("/");
           return;
         }
-        // Update click stats
-        const click = {
-          timestamp: new Date().toISOString(),
-          source: document.referrer || "Direct",
-          geoLocation: "Unknown", // Could be enhanced with geo IP API
+        // Update click stats with geo IP API
+        const fetchGeoLocation = async () => {
+          try {
+            console.log("Fetching geo location...");
+            const response = await fetch("https://ipapi.co/json/");
+            console.log("Geo API response status:", response.status);
+            if (!response.ok) {
+              throw new Error(
+                `Failed to fetch geo location: ${response.status}`
+              );
+            }
+            const data = await response.json();
+            console.log("Geo API data:", data);
+            const location = `${data.city || "Unknown"}, ${data.region || ""} ${
+              data.country_name || ""
+            }`.trim();
+            console.log("Formatted location:", location);
+            return location;
+          } catch (error) {
+            console.error("GeoLocation fetch error:", error);
+            return "Unknown";
+          }
         };
-        matched.clicks = (matched.clicks || 0) + 1;
-        matched.clickDetails = matched.clickDetails || [];
-        matched.clickDetails.push(click);
 
-        // Save updated data
-        const updatedUrls = urls.map((item) =>
-          item.shortcode === shortcode ? matched : item
-        );
-        localStorage.setItem("shortenedUrls", JSON.stringify(updatedUrls));
+        (async () => {
+          const geoLocation = await fetchGeoLocation();
+          const click = {
+            timestamp: new Date().toISOString(),
+            source: document.referrer || "Direct",
+            geoLocation: geoLocation,
+          };
+          matched.clicks = (matched.clicks || 0) + 1;
+          matched.clickDetails = matched.clickDetails || [];
+          matched.clickDetails.push(click);
 
-        // Redirect to original URL
-        window.location.href = matched.originalUrl;
+          // Save updated data
+          const updatedUrls = urls.map((item) =>
+            item.shortcode === shortcode ? matched : item
+          );
+          localStorage.setItem("shortenedUrls", JSON.stringify(updatedUrls));
+
+          // Redirect to original URL
+          window.location.href = matched.originalUrl;
+        })();
+        return;
       } else {
         alert("Short URL not found.");
         navigate("/");

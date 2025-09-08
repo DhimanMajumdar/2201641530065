@@ -219,7 +219,7 @@ const URLShortenerPage = () => {
                   item.createdAt
                 ).toLocaleString()} | Expires: ${new Date(
                   item.expiresAt
-                ).toLocaleString()}`}
+                ).toLocaleString()} | Total Clicks: ${item.clicks || 0}`}
               />
             </ListItem>
           ))}
